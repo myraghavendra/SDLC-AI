@@ -1,0 +1,11 @@
+.features-grid {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 1rem;
+  margin-top: 2rem;
+  overflow: hidden;
+  padding: 0 1rem;
+  min-height: 250px;
+}

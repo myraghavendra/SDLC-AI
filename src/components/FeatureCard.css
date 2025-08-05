@@ -1,0 +1,34 @@
+.feature-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+  padding: 1.5rem;
+  text-align: center;
+  width: 250px;
+  height: 250px;
+  margin: 0.5rem 0;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.feature-card .icon {
+  margin-bottom: 1rem;
+}
+
+.feature-card .title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #1e2a78;
+  margin-bottom: 0.5rem;
+}
+
+.feature-card .description {
+  font-weight: 400;
+  color: #555;
+  font-size: 0.9rem;
+}
