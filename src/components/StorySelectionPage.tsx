@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 interface Story {
   key: string;
   summary: string;
+  description?: string;
 }
 
 interface StorySelectionPageProps {
@@ -182,7 +183,7 @@ const StorySelectionPage: React.FC<StorySelectionPageProps> = ({ selectedTool, o
                 <input
                   type="radio"
                   name="story"
-                  checked={selectedStory && !stories.slice(0, 5).some(s => s.key === selectedStory.key)}
+                  checked={!!(selectedStory && !stories.slice(0, 5).some(s => s.key === selectedStory.key))}
                   onChange={() => setSelectedStory({ key: '', summary: '' })}
                 />{' '}
                 <strong>Other:</strong>

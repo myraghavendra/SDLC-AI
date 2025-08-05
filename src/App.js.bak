@@ -1,5 +1,5 @@
 "use strict";
-var __importDefault: any = (this && (this as any).__importDefault) || function (mod: any) {
+var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
