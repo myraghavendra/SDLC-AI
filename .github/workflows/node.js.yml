@@ -37,7 +37,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install uvicorn fastapi pydantic python-multipart requests python-dotenv openai
+          pip install uvicorn fastapi pydantic python-multipart requests python-dotenv openai jira
 
       - name: Build frontend
         run: npm run build
@@ -46,12 +46,13 @@ jobs:
         run: npm test || echo "No tests configured"
 
       - name: Start application stack
-        run: |
-          echo "Starting full application stack..."
-          npm run start:full &
-          sleep 30
-          curl -f http://localhost:5173 || echo "Frontend not responding"
-          curl -f http://localhost:8000/health || echo "Backend health check failed"
+        run: "
+          echo \"Starting full application stack...\"\n
+          npm run start:full &\n
+          sleep 30\n
+          curl -f http://localhost:5173 || echo \"Frontend not responding\"\n
+          curl -f http://localhost:8000/health || echo \"Backend health check failed\"\n
+        "
         timeout-minutes: 5
 
       - name: Cleanup
