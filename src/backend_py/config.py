@@ -10,10 +10,10 @@ def get_openai_api_key():
     Returns:
         str: The OpenAI API key
     """
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
+    OPENAI_API_KEY  = os.getenv("OPENAI_API_KEY")
+    if not OPENAI_API_KEY :
         raise ValueError("OPENAI_API_KEY environment variable is not set")
-    return api_key
+    return OPENAI_API_KEY 
 
 def get_jira_config():
     """
