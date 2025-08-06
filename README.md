@@ -34,7 +34,7 @@ This project is an AI-powered productivity suite for software development teams.
 ### Install Dependencies
 ```powershell
 npm install
-```
+``
 
 ### Start Frontend
 ```powershell
