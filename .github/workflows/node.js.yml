@@ -56,8 +56,7 @@ jobs:
           npm run start:full &\n
           sleep 30\n
           curl -f http://localhost:5173 || echo \"Frontend not responding\"\n
-          curl -f http://localhost:8000/health || echo \"Backend health check failed\"\n
-        "
+          curl -f http://localhost:8000/health || echo \"Backend health check failed\"\n"
         timeout-minutes: 5
 
       - name: Cleanup
