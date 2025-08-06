@@ -42,8 +42,6 @@ jobs:
       - name: Cleanup
         run: pkill -f "npm|node|uvicorn" || true
 
-      - name: Verifying port
-        run: netstat -ano | findstr :8000
         
 
       - name: Build frontend
