@@ -55,6 +55,20 @@ python src/backend_py/server.py
 - Access the frontend at `http://localhost:5173` (default Vite port).
 - Use the feature pages to generate stories, design tests, analyze requirements, and visualize data.
 
+## Environment Variables and GitHub Secrets
+
+This project uses environment variables for sensitive configuration such as API keys and tokens. To securely manage these in GitHub Actions, add the following secrets to your GitHub repository:
+
+- `OPENAI_API_KEY`
+- `JIRA_SERVER`
+- `JIRA_EMAIL`
+- `JIRA_API_TOKEN`
+- `JIRA_PROJECT_KEY`
+- `JIRA_URL`
+- `JIRA_USER`
+
+The GitHub Actions workflow will create a `.env` file from these secrets during the CI/CD process.
+
 ## Contributing
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
 
