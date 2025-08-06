@@ -8,12 +8,12 @@ import os
 import logging
 import openai
 
-from .config import get_openai_api_key
-from .generate_api import router as generate_router
-from .upload_jira_api import router as upload_jira_router
-from .jira_config_api import router as jira_config_router
-from .get_stories_api import router as get_stories_router
-from .requirement_analyser_api import router as requirement_analyser_router
+from config import get_openai_api_key
+from generate_api import router as generate_router
+from upload_jira_api import router as upload_jira_router
+from jira_config_api import router as jira_config_router
+from get_stories_api import router as get_stories_router
+from requirement_analyser_api import router as requirement_analyser_router
 
 load_dotenv()
 

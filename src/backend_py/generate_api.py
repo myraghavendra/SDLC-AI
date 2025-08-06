@@ -6,9 +6,9 @@ from pydantic import BaseModel
 from typing import Optional
 import os
 import openai
-from src.backend_py.config import get_openai_api_key
+from config import get_openai_api_key
 from openai import OpenAI
-from src.backend_py.jira_client import get_jira_stories, get_all_jira_stories
+from jira_client import get_jira_stories, get_all_jira_stories
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

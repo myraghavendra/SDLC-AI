@@ -2,7 +2,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import os
-from src.backend_py.jira_client import create_jira_story, JiraClientError
+from jira_client import create_jira_story, JiraClientError
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
