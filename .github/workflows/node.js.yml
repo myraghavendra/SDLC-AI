@@ -39,10 +39,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install uvicorn fastapi pydantic python-multipart requests python-dotenv openai jira
 
+      - name: Create .env file from GitHub secrets
+        run: |
+          cat > .env << EOF
+          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          JIRA_SERVER=${{ secrets.JIRA_SERVER }}
+          JIRA_EMAIL=${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN=${{ secrets.JIRA_API_TOKEN }}
+          JIRA_PROJECT_KEY=${{ secrets.JIRA_PROJECT_KEY }}
+          JIRA_URL=${{ secrets.JIRA_URL }}
+          JIRA_USER=${{ secrets.JIRA_USER }}
+          EOF
+
       - name: Cleanup
         run: pkill -f "npm|node|uvicorn" || true
-
-        
 
       - name: Build frontend
         run: npm run build
@@ -51,12 +61,20 @@ jobs:
         run: npm test || echo "No tests configured"
 
       - name: Start application stack
-        run: "
-          echo \"Starting full application stack...\"\n
-          npm run start:full &\n
-          sleep 30\n
-          curl -f http://localhost:5173 || echo \"Frontend not responding\"\n
-          curl -f http://localhost:8000/health || echo \"Backend health check failed\"\n"
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          JIRA_SERVER: ${{ secrets.JIRA_SERVER }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+          JIRA_URL: ${{ secrets.JIRA_URL }}
+          JIRA_USER: ${{ secrets.JIRA_USER }}
+        run: |
+          echo "Starting full application stack..."
+          npm run start:full &
+          sleep 30
+          curl -f http://localhost:5173 || echo "Frontend not responding"
+          curl -f http://localhost:8000/health || echo "Backend health check failed"
         timeout-minutes: 5
 
       - name: Cleanup
