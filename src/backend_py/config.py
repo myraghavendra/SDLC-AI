@@ -1,4 +1,5 @@
 import os
+import logging
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,10 +11,11 @@ def get_openai_api_key():
     Returns:
         str: The OpenAI API key
     """
-    OPENAI_API_KEY  = os.getenv("OPENAI_API_KEY")
-    if not OPENAI_API_KEY :
-        raise ValueError("OPENAI_API_KEY environment variable is not set")
-    return OPENAI_API_KEY 
+    openai_api_key = os.getenv("OPENAI_API_KEY")
+    if not openai_api_key:
+        logging.warning("OPENAI_API_KEY environment variable is not set. Some features may not work.")
+        return None
+    return openai_api_key
 
 def get_jira_config():
     """
@@ -27,3 +29,12 @@ def get_jira_config():
         "email": os.getenv("JIRA_EMAIL", ""),
         "token": os.getenv("JIRA_API_TOKEN", "")
     }
+
+def is_openai_configured():
+    """
+    Check if OpenAI API key is properly configured.
+    
+    Returns:
+        bool: True if OpenAI is configured, False otherwise
+    """
+    return get_openai_api_key() is not None
