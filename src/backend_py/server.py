@@ -44,6 +44,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 if not os.getenv("OPENAI_API_KEY"):
     os.environ["OPENAI_API_KEY"] = get_openai_api_key()
 openai.api_key = os.getenv("OPENAI_API_KEY")
+print("openai.api_key", openai.api_key)
 # Removed debug print statement
 # print("openai.api_key", openai.api_key)
 # Include routers from modularized API files
