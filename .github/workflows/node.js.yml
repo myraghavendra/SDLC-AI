@@ -41,13 +41,11 @@ jobs:
 
       - name: Create .env file from GitHub secrets
         run: |
-          cat > .env << EOF
-          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-          JIRA_API_TOKEN=${{ secrets.JIRA_API_TOKEN }}
-          JIRA_PROJECT_KEY=${{ secrets.JIRA_PROJECT_KEY }}
-          JIRA_URL=${{ secrets.JIRA_URL }}
-          JIRA_USER=${{ secrets.JIRA_USER }}
-          EOF
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
+          echo "JIRA_API_TOKEN=${{ secrets.JIRA_API_TOKEN }}" >> .env
+          echo "JIRA_PROJECT_KEY=${{ secrets.JIRA_PROJECT_KEY }}" >> .env
+          echo "JIRA_URL=${{ secrets.JIRA_URL }}" >> .env
+          echo "JIRA_USER=${{ secrets.JIRA_USER }}" >> .env     
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
