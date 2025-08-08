@@ -53,13 +53,12 @@ jobs:
           JIRA_URL: ${{ secrets.JIRA_URL }}
           JIRA_USER: ${{ secrets.JIRA_USER }}
 
-      - name: install
-        run: npm install --save-dev gh-pages
+      - name: ⬇️ Install dependencies
+        working-directory: ./frontend
+        run: npm install
 
-      - name: Cleanup
-        run: pkill -f "npm|node|uvicorn" || true
-
-      - name: Build frontend
+      - name: 🛠️ Build Vite app
+        working-directory: ./frontend
         run: npm run build
 
       - name: 📤 Deploy to GitHub Pages
@@ -67,7 +66,6 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./frontend/dist
-          publish_branch: gh-pages
           
       - name: deploy
         run: npm run deploy
