@@ -67,18 +67,20 @@ jobs:
           git config --global user.email "myraghava@gmail.com"
           git config --global user.name "myraghavendra"
 
+
+
+      - name: Deploy to GitHub Pages
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          git config --global user.name "myraghavendra"
+          git config --global user.email "myraghava@gmail.com"
+          npx gh-pages -d dist -r https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}
+   
       - name: deploy
         run: npm run deploy
 
-      - name: Deploy to GitHub Pages
-        run: npx gh-pages -d dist
 
-      - name: 📤 Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          
 
 
       - name: Start application stack
