@@ -65,7 +65,7 @@ jobs:
       - name: Set Git identity
         run: |
           git config --global user.email "myraghava@gmail.com"
-          git config --global user.name "GitHub Actions"
+          git config --global user.name "myraghavendra"
 
       - name: deploy
         run: npm run deploy
