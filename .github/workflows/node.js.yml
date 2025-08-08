@@ -54,7 +54,7 @@ jobs:
           JIRA_USER: ${{ secrets.JIRA_USER }}
 
       - name: install
-        run: npm install --save-dev gh-pages
+        run: npm install 
 
       - name: Cleanup
         run: pkill -f "npm|node|uvicorn" || true
@@ -62,14 +62,16 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: deploy
+        run: npm run deploy
+
       - name: 📤 Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
           
-      - name: deploy
-        run: npm run deploy
+
 
       - name: Start application stack
         env:
