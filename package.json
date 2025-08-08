@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "deploy": "gh-pages -d dist",
     "preview": "vite preview",
     "start": "concurrently \"npm run dev\" \"npx tsx src/backend/server.ts > backend.log 2>&1\"",
     "start:full": "concurrently \"npm run dev\" \"uvicorn src.backend_py.main:app --host 0.0.0.0 --port 8000\""
