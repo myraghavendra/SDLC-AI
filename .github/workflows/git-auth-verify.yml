@@ -19,31 +19,16 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
+      - name: Configure Git Identity
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
       - name: Verify Git Authentication
         run: |
           echo "🔐 Verifying Git authentication..."
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          
-          # Test authentication by fetching remote info
-          echo "📡 Testing Git remote connectivity..."
           git remote -v
-          
-          # Verify token authentication
-          echo "🔑 Testing token authentication..."
           git ls-remote origin HEAD
-          
-          # Show current branch and commit info
-          echo "📋 Current repository state:"
-          git branch -a
-          git log --oneline -5
-          
-          # Test if we can create a temporary branch (optional)
-          echo "🧪 Testing branch creation..."
-          git checkout -b test-auth-branch
-          git checkout main || git checkout master
-          git branch -D test-auth-branch
-          
           echo "✅ Git authentication verification completed successfully!"
 
       - name: Display Git Configuration
