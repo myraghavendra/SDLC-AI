@@ -62,8 +62,6 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - name: deploy
-        run: npm run deploy
 
 
 
@@ -77,6 +75,8 @@ jobs:
    
 
 
+      - name: deploy
+        run: npm run deploy
 
 
       - name: Start application stack
