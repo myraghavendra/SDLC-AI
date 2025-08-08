@@ -26,10 +26,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Configure Git Identity
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -72,9 +68,11 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - name: Deploy to GitHub Pages
- 
-        run: npx gh-pages -d dist -r https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/myraghavendra/SDLC-AI.git
+       - name: Deploy with gh-pages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx gh-pages -d dist -u "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
 
       - name: Deploy
         run: npm run deploy
