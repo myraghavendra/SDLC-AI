@@ -1,22 +1,29 @@
-name: Git Authentication Verification
+name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
+
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
-  test-and-run:
+  build-and-deploy:
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Configure Git Identity
@@ -24,109 +31,25 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
-      - name: Verify Git Authentication
-        run: |
-          echo "🔐 Verifying Git authentication..."
-          git remote -v
-          git ls-remote origin HEAD
-          echo "✅ Git authentication verification completed successfully!"
-
-      - name: Display Git Configuration
-        run: |
-          echo "🔍 Git Configuration:"
-          git config --list | grep -E "user\.(name|email)"
-          
-      - name: Test Repository Access
-        run: |
-          echo "📂 Repository contents:"
-          ls -la
-          
-          echo "📊 Repository statistics:"
-          git count-objects -vH
-          
-          echo "🗓️ Recent commits:"
-          git log --pretty=format:"%h - %an, %ar : %s" -5
-
-  verify-with-pat:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout with Personal Access Token
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0
-
-      - name: Verify PAT Authentication
-        run: |
-          echo "🔐 Verifying Personal Access Token authentication..."
-          
-          # Test PAT by listing repositories (if PAT has appropriate permissions)
-          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-               -H "Accept: application/vnd.github.v3+json" \
-               https://api.github.com/user/repos?per_page=5
-          
-          echo "✅ PAT authentication verification completed!"
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install Node.js dependencies
+      - name: Install dependencies
         run: npm ci
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install uvicorn fastapi pydantic python-multipart requests python-dotenv openai jira
-
-      - name: Create .env file from GitHub secrets
-        run: |
-          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
-          echo "JIRA_API_TOKEN=${{ secrets.JIRA_API_TOKEN }}" >> .env
-          echo "JIRA_PROJECT_KEY=${{ secrets.JIRA_PROJECT_KEY }}" >> .env
-          echo "JIRA_URL=${{ secrets.JIRA_URL }}" >> .env
-          echo "JIRA_USER=${{ secrets.JIRA_USER }}" >> .env     
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
-          JIRA_URL: ${{ secrets.JIRA_URL }}
-          JIRA_USER: ${{ secrets.JIRA_USER }}
-
-      - name: Install gh-pages
-        run: npm install --save-dev gh-pages
-
-      - name: Cleanup
-        run: pkill -f "npm|node|uvicorn" || true
 
       - name: Build frontend
         run: npm run build
 
-      - name: Deploy to gh-pages
-        run: npx gh-pages -d dist -r https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/myraghavendra/SDLC-AI.git  
-
-      - name: Deploy
-        run: npm run deploy
-
-      - name: Start application stack
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
-          JIRA_URL: ${{ secrets.JIRA_URL }}
-          JIRA_USER: ${{ secrets.JIRA_USER }}
-        run: |
-          echo "Starting full application stack..."
-          npm run start:full &
-          sleep 30
-          curl -f http://localhost:5173 || echo "Frontend not responding"
-          curl -f http://localhost:8000/health || echo "Backend health check failed"
-        timeout-minutes: 5
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          cname: ''
+          allow_empty_commit: true
+          commit_message: ${{ github.event.head_commit.message }}
