@@ -62,9 +62,16 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Set Git identity
+        run: |
+          git config --global user.email "myraghava@gmail.com"
+          git config --global user.name "GitHub Actions"
 
       - name: deploy
         run: npm run deploy
+
+      - name: Deploy to GitHub Pages
+        run: npx gh-pages -d dist
 
       - name: 📤 Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
