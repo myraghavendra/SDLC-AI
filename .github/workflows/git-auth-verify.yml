@@ -1,0 +1,84 @@
+name: Git Authentication Verification
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  verify-git-auth:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Verify Git Authentication
+        run: |
+          echo "🔐 Verifying Git authentication..."
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          
+          # Test authentication by fetching remote info
+          echo "📡 Testing Git remote connectivity..."
+          git remote -v
+          
+          # Verify token authentication
+          echo "🔑 Testing token authentication..."
+          git ls-remote origin HEAD
+          
+          # Show current branch and commit info
+          echo "📋 Current repository state:"
+          git branch -a
+          git log --oneline -5
+          
+          # Test if we can create a temporary branch (optional)
+          echo "🧪 Testing branch creation..."
+          git checkout -b test-auth-branch
+          git checkout main || git checkout master
+          git branch -D test-auth-branch
+          
+          echo "✅ Git authentication verification completed successfully!"
+
+      - name: Display Git Configuration
+        run: |
+          echo "🔍 Git Configuration:"
+          git config --list | grep -E "user\.(name|email)"
+          
+      - name: Test Repository Access
+        run: |
+          echo "📂 Repository contents:"
+          ls -la
+          
+          echo "📊 Repository statistics:"
+          git count-objects -vH
+          
+          echo "🗓️ Recent commits:"
+          git log --pretty=format:"%h - %an, %ar : %s" -5
+
+  verify-with-pat:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout with Personal Access Token
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          fetch-depth: 0
+
+      - name: Verify PAT Authentication
+        run: |
+          echo "🔐 Verifying Personal Access Token authentication..."
+          
+          # Test PAT by listing repositories (if PAT has appropriate permissions)
+          curl -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/user/repos?per_page=5
+          
+          echo "✅ PAT authentication verification completed!"
