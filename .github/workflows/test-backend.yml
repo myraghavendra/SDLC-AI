@@ -61,31 +61,56 @@ jobs:
           echo "JIRA_URL=https://test.atlassian.net" >> src/backend_py/.env
           echo "JIRA_USER=test@example.com" >> src/backend_py/.env
 
+      - name: Fix Python imports
+        run: |
+          echo "Setting up Python path for proper imports..."
+          
+          # Add the project root to PYTHONPATH so 'src' module can be found
+          export PYTHONPATH="${GITHUB_WORKSPACE}:${PYTHONPATH}"
+          echo "PYTHONPATH=${GITHUB_WORKSPACE}:${PYTHONPATH}" >> $GITHUB_ENV
+          
+          # Also add an __init__.py to src if it doesn't exist
+          touch src/__init__.py
+          touch src/backend_py/__init__.py
+          
+          echo "Python path setup complete"
+
       - name: Validate main.py exists and imports
         run: |
-          # Change to backend directory
-          cd src/backend_py
+          echo "✅ Validating main.py imports from project root..."
           
-          if [ ! -f main.py ]; then
+          if [ ! -f src/backend_py/main.py ]; then
             echo "❌ main.py not found in src/backend_py/!"
             echo "Available files in src/backend_py/:"
-            ls -la
+            ls -la src/backend_py/
             echo "Available Python files:"
             find . -name "*.py" -type f
             exit 1
           fi
           
-          echo "✅ main.py found in src/backend_py/, checking if it can be imported..."
+          echo "✅ main.py found, checking if it can be imported..."
+          
+          # Test import from project root (not from within backend_py directory)
           python -c "
           import sys
-          sys.path.insert(0, '.')
+          import os
+          print(f'Current working directory: {os.getcwd()}')
+          print(f'Python path: {sys.path}')
+          
           try:
+              # Import from the correct path
+              sys.path.insert(0, 'src/backend_py')
               import main
               print('✅ main.py imports successfully')
               if hasattr(main, 'app'):
                   print('✅ FastAPI app found in main.py')
               else:
-                  print('⚠️  No app variable found in main.py')
+                  print('⚠️  No app variable found in main.py - checking for server import')
+                  try:
+                      from server import app as server_app
+                      print('✅ FastAPI app found via server import')
+                  except ImportError as e:
+                      print(f'❌ Could not find app: {e}')
           except Exception as e:
               print(f'❌ Import error: {e}')
               import traceback
@@ -95,12 +120,10 @@ jobs:
 
       - name: Test backend startup
         run: |
-          # Change to backend directory
+          echo "Starting FastAPI server from project root..."
+          
+          # Start the server from project root with proper module path
           cd src/backend_py
-          
-          echo "Starting FastAPI server from src/backend_py/..."
-          
-          # Start the server in background with better error handling
           uvicorn main:app --host 0.0.0.0 --port 8000 --log-level info &
           SERVER_PID=$!
           
@@ -114,8 +137,10 @@ jobs:
               break
             elif [ $i -eq 30 ]; then
               echo "❌ Server failed to start within 30 seconds"
-              echo "Server logs:"
+              echo "Checking server process:"
               ps aux | grep uvicorn || echo "No uvicorn process found"
+              echo "Checking server logs (if any):"
+              jobs -l
               kill $SERVER_PID 2>/dev/null || true
               exit 1
             fi
@@ -134,6 +159,8 @@ jobs:
           
           if [ "$HTTP_CODE" != "200" ]; then
             echo "❌ Health check failed with status $HTTP_CODE"
+            echo "Trying to get more error information:"
+            curl -v http://localhost:8000/health || true
             kill $SERVER_PID 2>/dev/null || true
             exit 1
           fi
@@ -143,6 +170,10 @@ jobs:
           # Test additional endpoints if they exist
           echo "Testing root endpoint..."
           curl -s -f http://localhost:8000/ > /dev/null 2>&1 && echo "✅ Root endpoint OK" || echo "⚠️  Root endpoint not available"
+          
+          # Test docs endpoint
+          echo "Testing docs endpoint..."
+          curl -s -f http://localhost:8000/docs > /dev/null 2>&1 && echo "✅ Docs endpoint OK" || echo "⚠️  Docs endpoint not available"
           
           # Clean up
           echo "Stopping server..."
@@ -159,14 +190,13 @@ jobs:
 
       - name: Run tests (if you have them)
         run: |
-          # Change to backend directory
-          cd src/backend_py
-          
-          if [ -d "tests" ] && [ "$(find tests -name "*.py" | wc -l)" -gt 0 ]; then
-            echo "Running pytest tests..."
+          if [ -d "src/backend_py/tests" ] && [ "$(find src/backend_py/tests -name "*.py" | wc -l)" -gt 0 ]; then
+            echo "Running pytest tests from project root..."
+            cd src/backend_py
             pytest tests/ -v
-          elif [ -f "test_main.py" ]; then
+          elif [ -f "src/backend_py/test_main.py" ]; then
             echo "Running test_main.py..."
+            cd src/backend_py
             pytest test_main.py -v
           else
             echo "No tests found in src/backend_py/. Consider adding tests:"
@@ -174,4 +204,39 @@ jobs:
             echo "├── __init__.py"
             echo "├── test_main.py"
             echo "└── test_api.py"
+            echo ""
+            echo "Example test structure:"
+            echo "# test_main.py"
+            echo "from fastapi.testclient import TestClient"
+            echo "from main import app"
+            echo ""
+            echo "client = TestClient(app)"
+            echo ""
+            echo "def test_health_endpoint():"
+            echo "    response = client.get('/health')"
+            echo "    assert response.status_code == 200"
           fi
+
+      # Optional: Add a step to suggest import fixes
+      - name: Import troubleshooting (on failure)
+        if: failure()
+        run: |
+          echo "🔧 Import troubleshooting suggestions:"
+          echo ""
+          echo "The most common issue is relative imports. Here are the fixes:"
+          echo ""
+          echo "1. In get_stories_api.py, change:"
+          echo "   from src.backend_py.jira_client import ..."
+          echo "   to:"
+          echo "   from jira_client import ..."
+          echo ""
+          echo "2. Or add project root to Python path in main.py:"
+          echo "   import sys"
+          echo "   import os"
+          echo "   sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))"
+          echo ""
+          echo "3. Or use relative imports:"
+          echo "   from .jira_client import ..."
+          echo ""
+          echo "Current file structure:"
+          find . -name "*.py" -type f | head -10
