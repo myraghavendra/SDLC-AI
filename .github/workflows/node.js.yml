@@ -53,14 +53,17 @@ jobs:
           JIRA_URL: ${{ secrets.JIRA_URL }}
           JIRA_USER: ${{ secrets.JIRA_USER }}
 
+      - name: install
+        run: pnpm install --save-dev gh-pages
+
       - name: Cleanup
         run: pkill -f "npm|node|uvicorn" || true
 
       - name: Build frontend
         run: npm run build
 
-      - name: Run tests
-        run: npm test || echo "No tests configured"
+      - name: deploy
+        run: nnpm run deploy
 
       - name: Start application stack
         env:
