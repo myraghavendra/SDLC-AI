@@ -49,5 +49,6 @@
     "typescript": "^5.8.3",
     "vite": "^4.3.9",
     "vitest": "^3.2.4"
-  }
+  },
+   "homepage": "https://myraghavendra.github.io/SDLC-AI"
 }

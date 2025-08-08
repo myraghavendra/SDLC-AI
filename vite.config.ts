@@ -1,17 +1,8 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+// vite.config.ts
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
 export default defineConfig({
+  base: '/SDLC-AI/', // 🔁 change to your repo name, NOT your GitHub username
   plugins: [react()],
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        secure: false,
-        // Do not rewrite the path; forward as-is
-      },
-       base: '/SDLC-AI/'
-    }
-  }
-});
+})

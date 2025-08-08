@@ -54,13 +54,14 @@ jobs:
           JIRA_USER: ${{ secrets.JIRA_USER }}
 
       - name: install
-        run: npm install 
+        run: npm install --save-dev gh-pages
 
       - name: Cleanup
         run: pkill -f "npm|node|uvicorn" || true
 
       - name: Build frontend
         run: npm run build
+
 
       - name: deploy
         run: npm run deploy
