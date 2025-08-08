@@ -8,7 +8,7 @@ import os
 import logging
 import openai
 
-from config import get_openai_api_key
+from config import get_openai_api_key, is_openai_configured
 from generate_api import router as generate_router
 from upload_jira_api import router as upload_jira_router
 from jira_config_api import router as jira_config_router
@@ -44,12 +44,20 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 if not os.getenv("OPENAI_API_KEY"):
     os.environ["OPENAI_API_KEY"] = get_openai_api_key()
 openai.api_key = os.getenv("OPENAI_API_KEY")
-print("openai.api_key", openai.api_key)
-# Removed debug print statement
-# print("openai.api_key", openai.api_key)
+# Ensure no sensitive information is printed to the console
 # Include routers from modularized API files
 app.include_router(generate_router)
 app.include_router(upload_jira_router)
 app.include_router(jira_config_router)
 app.include_router(get_stories_router)
 app.include_router(requirement_analyser_router)
+
+# Health check endpoint
+@app.get("/api/health")
+async def health_check():
+    """Health check endpoint to verify service status."""
+    return {
+        "status": "healthy",
+        "openai_configured": is_openai_configured(),
+        "timestamp": __import__('datetime').datetime.now().isoformat()
+    }
