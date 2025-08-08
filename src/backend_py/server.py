@@ -41,11 +41,15 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 # Initialize OpenAI client
-if not os.getenv("OPENAI_API_KEY"):
-    os.environ["OPENAI_API_KEY"] = get_openai_api_key()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+key = os.getenv("OPENAI_API_KEY") or get_openai_api_key()
+if key:
+    os.environ["OPENAI_API_KEY"] = key
+    openai.api_key = key
+else:
+    logger.warning("OPENAI_API_KEY is missing or invalid. Some features may not work.")
 # Ensure no sensitive information is printed to the console
 # Include routers from modularized API files
+
 app.include_router(generate_router)
 app.include_router(upload_jira_router)
 app.include_router(jira_config_router)
