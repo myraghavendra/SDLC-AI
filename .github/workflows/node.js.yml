@@ -59,7 +59,7 @@ jobs:
         run: pkill -f "npm|node|uvicorn" || true
 
       - name: Build frontend
-        run:npm run buildnpm run buildnpm run build npm run build
+        run: npm run build
 
       - name: Run tests
         run: npm test || echo "No tests configured"
