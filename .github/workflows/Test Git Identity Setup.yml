@@ -1,22 +1,27 @@
-name: Test Git Identity Setup
+name: Test Git Identity with GITHUB_TOKEN
 
 on:
-  workflow_dispatch:  # Run this manually from GitHub Actions UI
+  workflow_dispatch:
 
 jobs:
-  git-identity-test:
+  test-auth:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set Git identity
         run: |
-          git config --global user.email "myraghava@gmail.com"
-          git config --global user.name "myraghavendra"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Show Git identity
+      - name: Make test commit
         run: |
-          echo "Git user.name: $(git config --global user.name)"
-          echo "Git user.email: $(git config --global user.email)"
+          echo "Test run at $(date)" >> auth_test.log
+          git add auth_test.log
+          git commit -m "Test: commit to verify GITHUB_TOKEN auth" || echo "No changes to commit"
+
+      - name: Push commit
+        run: git push origin HEAD
