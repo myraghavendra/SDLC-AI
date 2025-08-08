@@ -54,7 +54,7 @@ jobs:
           JIRA_USER: ${{ secrets.JIRA_USER }}
 
       - name: install
-        run: pnpm install --save-dev gh-pages
+        run: npm install --save-dev gh-pages
 
       - name: Cleanup
         run: pkill -f "npm|node|uvicorn" || true
