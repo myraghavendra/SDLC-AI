@@ -1,0 +1,22 @@
+name: Test Git Identity Setup
+
+on:
+  workflow_dispatch:  # Run this manually from GitHub Actions UI
+
+jobs:
+  git-identity-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set Git identity
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Show Git identity
+        run: |
+          echo "Git user.name: $(git config --global user.name)"
+          echo "Git user.email: $(git config --global user.email)"
