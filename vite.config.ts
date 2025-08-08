@@ -9,7 +9,7 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
-        // Do not rewrite the path; forward as-is
+        // Do not rewrite the path; forward as-is.
       },
        base: '/SDLC-AI/'
     }
