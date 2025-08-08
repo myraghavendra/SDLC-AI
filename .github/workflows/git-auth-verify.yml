@@ -70,7 +70,7 @@ jobs:
       - name: Checkout with Personal Access Token
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Verify PAT Authentication
@@ -78,7 +78,7 @@ jobs:
           echo "🔐 Verifying Personal Access Token authentication..."
           
           # Test PAT by listing repositories (if PAT has appropriate permissions)
-          curl -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                -H "Accept: application/vnd.github.v3+json" \
                https://api.github.com/user/repos?per_page=5
           
@@ -139,7 +139,7 @@ jobs:
 
 
       - name: Deploy to gh-pages
-        run: npx gh-pages -d dist -r https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/myraghavendra/SDLC-AI.git  
+        run: npx gh-pages -d dist -r https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/myraghavendra/SDLC-AI.git  
 
       - name: deploy
         run: npm run deploy
