@@ -49,13 +49,13 @@ jobs:
           echo "JIRA_API_TOKEN=${{ secrets.JIRA_API_TOKEN }}" >> .env
           echo "JIRA_PROJECT_KEY=${{ secrets.JIRA_PROJECT_KEY }}" >> .env
           echo "JIRA_URL=${{ secrets.JIRA_URL }}" >> .env
-          echo "JIRA_USER=${{ secrets.JIRA_USER }}" >> .env     
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
-          JIRA_URL: ${{ secrets.JIRA_URL }}
-          JIRA_USER: ${{ secrets.JIRA_USER }}
+          echo "JIRA_USER=${{ secrets.JIRA_USER }}" >> .env
+
+      # Verify .env file was created properly (optional debug step)
+      - name: Verify environment file
+        run: |
+          echo "Contents of .env file (masked):"
+          sed 's/=.*/=***MASKED***/' .env
 
       - name: install
         run: npm install --save-dev gh-pages
@@ -82,17 +82,37 @@ jobs:
       - name: Deploy
         run: npm run deploy
 
+      # Export environment variables to GitHub environment for subsequent steps
+      - name: Export environment variables
+        run: |
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
+          echo "JIRA_API_TOKEN=${{ secrets.JIRA_API_TOKEN }}" >> $GITHUB_ENV
+          echo "JIRA_PROJECT_KEY=${{ secrets.JIRA_PROJECT_KEY }}" >> $GITHUB_ENV
+          echo "JIRA_URL=${{ secrets.JIRA_URL }}" >> $GITHUB_ENV
+          echo "JIRA_USER=${{ secrets.JIRA_USER }}" >> $GITHUB_ENV
+
       - name: Start application stack
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
-          JIRA_URL: ${{ secrets.JIRA_URL }}
-          JIRA_USER: ${{ secrets.JIRA_USER }}
         run: |
           echo "Starting full application stack..."
+          # Source the .env file to make sure all variables are loaded
+          set -a && source .env && set +a
           npm run start:full &
+          APP_PID=$!
           sleep 30
-          curl -f http://localhost:5173 || echo "Frontend not responding"
-          curl -f http://localhost:8000/health || echo "Backend health check failed"
+          
+          # Test endpoints
+          if curl -f http://localhost:5173; then
+            echo "✅ Frontend is responding"
+          else
+            echo "❌ Frontend not responding"
+          fi
+          
+          if curl -f http://localhost:8000/health; then
+            echo "✅ Backend health check passed"
+          else
+            echo "❌ Backend health check failed"
+          fi
+          
+          # Clean up
+          kill $APP_PID || true
         timeout-minutes: 5
