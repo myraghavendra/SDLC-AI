@@ -63,7 +63,7 @@ jobs:
         run: npm run build
 
       - name: deploy
-        run: nnpm run deploy
+        run: npm run deploy
 
       - name: Start application stack
         env:
@@ -80,5 +80,5 @@ jobs:
           curl -f http://localhost:8000/health || echo "Backend health check failed"
         timeout-minutes: 5
 
-      - name: Cleanup
-        run: pkill -f "npm|node|uvicorn" || true
+      # - name: Cleanup
+      #   run: pkill -f "npm|node|uvicorn" || true
