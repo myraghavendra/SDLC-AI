@@ -22,12 +22,13 @@ def get_jira_config():
     Get Jira configuration from environment variables.
     
     Returns:
-        dict: Jira configuration containing server, email, and token
+        dict: Jira configuration containing server, email, token, and project key
     """
     return {
-        "server": os.getenv("JIRA_SERVER", ""),
-        "email": os.getenv("JIRA_EMAIL", ""),
-        "token": os.getenv("JIRA_API_TOKEN", "")
+        "server": os.getenv("JIRA_URL", ""),
+        "email": os.getenv("JIRA_USER", ""),
+        "token": os.getenv("JIRA_API_TOKEN", ""),
+        "project_key": os.getenv("JIRA_PROJECT_KEY", "")
     }
 
 def is_openai_configured():
