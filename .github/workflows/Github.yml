@@ -1,0 +1,98 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Ensure we fetch the full history for gh-pages
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install uvicorn fastapi pydantic python-multipart requests python-dotenv openai jira
+
+      - name: Create .env file from GitHub secrets
+        run: |
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
+          echo "JIRA_API_TOKEN=${{ secrets.JIRA_API_TOKEN }}" >> .env
+          echo "JIRA_PROJECT_KEY=${{ secrets.JIRA_PROJECT_KEY }}" >> .env
+          echo "JIRA_URL=${{ secrets.JIRA_URL }}" >> .env
+          echo "JIRA_USER=${{ secrets.JIRA_USER }}" >> .env     
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+          JIRA_URL: ${{ secrets.JIRA_URL }}
+          JIRA_USER: ${{ secrets.JIRA_USER }}
+
+      - name: install
+        run: npm install --save-dev gh-pages
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Set Git identity
+        run: |
+          git config --global user.email "myraghava@gmail.com"
+          git config --global user.name "myraghavendra"
+
+      # Configure Git remote with token for authentication
+      - name: Configure Git remote
+        run: |
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+
+      - name: Deploy with gh-pages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx gh-pages -d dist
+
+      - name: Deploy
+        run: npm run deploy
+
+      - name: Start application stack
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+          JIRA_URL: ${{ secrets.JIRA_URL }}
+          JIRA_USER: ${{ secrets.JIRA_USER }}
+        run: |
+          echo "Starting full application stack..."
+          npm run start:full &
+          sleep 30
+          curl -f http://localhost:5173 || echo "Frontend not responding"
+          curl -f http://localhost:8000/health || echo "Backend health check failed"
+        timeout-minutes: 5
