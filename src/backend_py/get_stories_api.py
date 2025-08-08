@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from typing import Optional
 import os
 import base64
-from src.backend_py.jira_client import get_jira_stories, JiraClientError
+from jira_client import get_jira_stories, JiraClientError
 import logging
 from openai import OpenAI
 
