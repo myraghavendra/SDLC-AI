@@ -8,13 +8,24 @@ import os
 import base64
 from jira_client import get_jira_stories, JiraClientError
 import logging
-from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+# Initialize OpenAI client only if API key is available
 openai_api_key = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=openai_api_key)
+client = None
+
+if openai_api_key:
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=openai_api_key)
+        logger.info("OpenAI client initialized successfully")
+    except Exception as e:
+        logger.warning(f"Failed to initialize OpenAI client: {e}. AI features will be disabled.")
+        client = None
+else:
+    logger.info("OpenAI API key not found. AI features will be disabled.")
 
 class GetStoriesRequest(BaseModel):
     tool: str
@@ -130,20 +141,26 @@ async def get_stories_by_filter(request: GetStoriesByFilterRequest):
             issues_summary = "\n".join([f"{issue['key']}: {issue['fields']['summary']} (Status: {issue['fields']['status']['name']})" for issue in defect_issues])
             prompt = f"Generate a defect summary report for project {project_key} including total number of defects, open/closed/reopened status, severity breakdown, and defect leakage if available. Here are the defects:\n{issues_summary}"
 
-            try:
-                completion = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[
-                        {"role": "system", "content": "You are a helpful assistant that analyzes Jira issues."},
-                        {"role": "user", "content": prompt},
-                    ],
-                    max_tokens=500,
-                    temperature=0.7,
-                )
-                analysis = completion.choices[0].message.content.strip()
-            except Exception as e:
-                logger.error(f"Error during OpenAI analysis: {e}")
-                analysis = "Error analyzing Jira issues."
+            # Generate analysis using OpenAI if available
+            analysis = "OpenAI analysis not available - API key not configured or client initialization failed."
+            if client:
+                try:
+                    completion = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[
+                            {"role": "system", "content": "You are a helpful assistant that analyzes Jira issues."},
+                            {"role": "user", "content": prompt},
+                        ],
+                        max_tokens=500,
+                        temperature=0.7,
+                    )
+                    analysis = completion.choices[0].message.content.strip()
+                    logger.info("OpenAI analysis completed successfully")
+                except Exception as e:
+                    logger.error(f"Error during OpenAI analysis: {e}")
+                    analysis = f"Error analyzing Jira issues with OpenAI: {str(e)}"
+            else:
+                logger.info("Skipping OpenAI analysis - client not available")
 
             # Prepare data for all reports
             total_defects = len(defect_issues)
