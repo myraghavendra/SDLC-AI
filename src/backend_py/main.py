@@ -1,7 +1,7 @@
 import logging
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import your existing routers
@@ -110,10 +110,11 @@ async def root():
 
 # Add middleware for request logging (optional)
 @app.middleware("http")
-async def log_requests(request, call_next):
+async def log_requests(request: Request, call_next):
     """
     Log all incoming requests
     """
+    import time
     start_time = time.time()
     
     # Log request
@@ -129,7 +130,6 @@ async def log_requests(request, call_next):
     return response
 
 if __name__ == "__main__":
-    import time
     import uvicorn
     
     # Get port from Railway environment or default to 8000
