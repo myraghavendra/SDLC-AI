@@ -14,6 +14,7 @@ from upload_jira_api import router as upload_jira_router
 from jira_config_api import router as jira_config_router
 from get_stories_api import router as get_stories_router
 from requirement_analyser_api import router as requirement_analyser_router
+from config import get_openai_api_key
 
 load_dotenv()
 
@@ -41,6 +42,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 # Initialize OpenAI client
+
 key = os.getenv("OPENAI_API_KEY") or get_openai_api_key()
 if key:
     os.environ["OPENAI_API_KEY"] = key

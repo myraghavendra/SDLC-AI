@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import Optional
 import os
 import openai
-from config import get_openai_api_key, is_openai_configured
+from config import get_openai_api_key, is_openai_configured, get_jira_config
 from openai import OpenAI
 from jira_client import get_jira_stories, get_all_jira_stories
 
@@ -135,9 +135,10 @@ async def defect_summary_report(request: Request):
         return JSONResponse(content={"error": "Project name is required"})
 
     # Get JIRA configuration from environment variables
-    jira_url = os.getenv("JIRA_URL", "")
-    api_token = os.getenv("JIRA_API_TOKEN", "")
-    username = os.getenv("JIRA_USER", "")
+    jira_config = get_jira_config()
+    jira_url = os.getenv("JIRA_URL", "") or jira_config["server"]
+    api_token = os.getenv("JIRA_API_TOKEN", "") or jira_config["token"]
+    username = os.getenv("JIRA_USER", "") or jira_config["email"]
 
     if not jira_url or not api_token or not username:
         return JSONResponse(content={"error": "JIRA configuration is missing"})
