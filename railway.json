@@ -1,18 +1,17 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
-    "builder": "NIXPACKS"
+    "builder": "NIXPACKS",
+    "buildCommand": "echo 'Build complete'",
+    "startCommand": "uvicorn src.backend_py.main:app --host 0.0.0.0 --port $PORT"
   },
   "deploy": {
     "runtime": "V2",
     "numReplicas": 1,
     "sleepApplication": false,
-    "multiRegionConfig": {
-      "asia-southeast1-eqsg3a": {
-        "numReplicas": 1
-      }
-    },
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
+    "restartPolicyMaxRetries": 10,
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 300
   }
 }
