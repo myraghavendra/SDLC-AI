@@ -12,14 +12,17 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    container: ghcr.io/railwayapp/cli:latest
     
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Deploy to Railway
-        uses: railwayapp/railway-deploy@v3
-        with:
-          railway-token: ${{ secrets.RAILWAY_TOKEN }}
-          service: backend
-          environment: production
+        uses: actions/checkout@v4
+        
+      - name: Deploy with Railway CLI
+        run: railway up --service=${{ env.SERVICE_ID }}
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          SERVICE_ID: ${{ secrets.SERVICE_ID }}
