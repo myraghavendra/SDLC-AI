@@ -2,11 +2,11 @@
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "echo 'Build complete'",
-    "startCommand": "uvicorn src.backend_py.main:app --host 0.0.0.0 --port $PORT"
+    "buildCommand": "echo 'Build complete'"
   },
   "deploy": {
     "runtime": "V2",
+    "startCommand": "uvicorn src.backend_py.main:app --host 0.0.0.0 --port $PORT",
     "numReplicas": 1,
     "sleepApplication": false,
     "restartPolicyType": "ON_FAILURE",
