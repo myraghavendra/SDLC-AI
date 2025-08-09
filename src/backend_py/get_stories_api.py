@@ -57,7 +57,7 @@ async def get_stories(request: GetStoriesRequest):
             return JSONResponse(content={"error": "Jira API key not configured in environment"})
         username = os.getenv("JIRA_USER", "") or jira_config["email"]
         try:
-            from src.backend_py.jira_client import get_all_jira_stories
+            from jira_client import get_all_jira_stories
             stories = await get_all_jira_stories(
                 jira_url=jira_url,
                 username=username,
