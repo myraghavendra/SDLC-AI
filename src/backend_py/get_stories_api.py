@@ -8,12 +8,14 @@ import os
 import base64
 from jira_client import get_jira_stories, JiraClientError
 import logging
+from config import get_openai_api_key, get_jira_config
+jira_config = get_jira_config()
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # Initialize OpenAI client only if API key is available
-openai_api_key = os.getenv("OPENAI_API_KEY")
+openai_api_key = os.getenv("OPENAI_API_KEY") or get_openai_api_key()
 client = None
 
 if openai_api_key:
@@ -42,19 +44,18 @@ class GetStoriesByFilterRequest(BaseModel):
 async def get_stories(request: GetStoriesRequest):
     tool = request.tool.lower()
     if tool == "jira":
-        jira_url = request.jira_url or os.getenv("JIRA_URL", "")
-        project_key = request.project_key or os.getenv("JIRA_PROJECT_KEY", "")
-        print("jira_url",jira_url) 
-        print("project_key",project_key) 
+        jira_url = request.jira_url or os.getenv("JIRA_URL", "") or jira_config["server"]
+        project_key = request.project_key or os.getenv("JIRA_PROJECT_KEY", "") or jira_config["JIRA_PROJECT_KEY"]
+ 
         logger.info(f"Received getStories request for Jira with url={jira_url} project_key={project_key}")
         if not jira_url:
             return JSONResponse(content={"error": "Jira URL is required for Jira"})
         if not project_key:
             return JSONResponse(content={"error": "Project Key is required for Jira"})
-        api_key = os.getenv("JIRA_API_TOKEN", "")
+        api_key = os.getenv("JIRA_API_TOKEN", "") or jira_config["token"]
         if not api_key:
             return JSONResponse(content={"error": "Jira API key not configured in environment"})
-        username = os.getenv("JIRA_USER", "")
+        username = os.getenv("JIRA_USER", "") or jira_config["email"]
         try:
             from src.backend_py.jira_client import get_all_jira_stories
             stories = await get_all_jira_stories(
@@ -79,12 +80,10 @@ async def get_stories(request: GetStoriesRequest):
 async def get_stories_by_filter(request: GetStoriesByFilterRequest):
     tool = request.tool.lower()
     if tool == "jira":
-        jira_url = request.jira_url or os.getenv("JIRA_URL", "")
+        jira_url = request.jira_url or os.getenv("JIRA_URL", "") or jira_config["server"]
         filter_id = request.filter_id
         project_key = request.project_key
-        print("Raghava jira_url",jira_url) 
-        print("filter_id",filter_id) 
-        print("project_key",project_key) 
+
         logger.info(f"Received getStoriesByFilter request for Jira with url={jira_url} filter_id={filter_id} project_key={project_key}")
         if not jira_url:
             return JSONResponse(content={"error": "Jira URL is required for Jira"})
@@ -92,10 +91,10 @@ async def get_stories_by_filter(request: GetStoriesByFilterRequest):
             return JSONResponse(content={"error": "Filter ID is required for Jira"})
         if not project_key:
             return JSONResponse(content={"error": "Project Key is required for Jira"})
-        api_key = os.getenv("JIRA_API_TOKEN", "")
+        api_key = os.getenv("JIRA_API_TOKEN", "") or jira_config["token"]
         if not api_key:
             return JSONResponse(content={"error": "Jira API key not configured in environment"})
-        username = os.getenv("JIRA_USER", "")
+        username = os.getenv("JIRA_USER", "") or jira_config["email"]
         jql = f"filter={filter_id}"
         print("raghava1")
         from httpx import AsyncClient
@@ -258,9 +257,9 @@ async def get_stories_by_filter(request: GetStoriesByFilterRequest):
 # New endpoint to fetch Jira projects
 @router.get("/api/getJiraProjects")
 async def get_jira_projects():
-    jira_url = os.getenv("JIRA_URL", "")
-    api_key = os.getenv("JIRA_API_TOKEN", "")
-    username = os.getenv("JIRA_USER", "")
+    jira_url = os.getenv("JIRA_URL", "") or jira_config["server"]
+    api_key = os.getenv("JIRA_API_TOKEN", "") or jira_config["token"]
+    username = os.getenv("JIRA_USER", "") or jira_config["email"]
 
     if not jira_url:
         return JSONResponse(content={"error": "Jira URL is not configured"})

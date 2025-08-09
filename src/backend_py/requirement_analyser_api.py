@@ -7,6 +7,7 @@ from openai import OpenAI
 import openai
 import asyncio
 import re
+from config import get_openai_api_key
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -20,7 +21,7 @@ class AnalyzeRequirementRequest(BaseModel):
 @router.post("/api/analyzeRequirement")
 async def analyze_requirement(request: AnalyzeRequirementRequest):
     try:
-        openai_api_key = os.getenv("OPENAI_API_KEY")
+        openai_api_key = os.getenv("OPENAI_API_KEY") or get_openai_api_key()
         if not openai_api_key:
             return JSONResponse(status_code=500, content={"error": "OpenAI API key not configured"})
         openai.api_key = openai_api_key

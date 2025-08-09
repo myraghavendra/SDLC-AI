@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import os
 from jira_client import create_jira_story, JiraClientError
+from config import get_jira_config
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -13,10 +14,12 @@ class UploadJiraRequest(BaseModel):
 
 @router.post("/api/upload-jira")
 async def upload_jira(request: UploadJiraRequest):
-    jira_url = os.getenv("JIRA_URL")
-    username = os.getenv("JIRA_USER")
-    api_token = os.getenv("JIRA_API_TOKEN")
-    project_key = os.getenv("JIRA_PROJECT_KEY")
+    jira_config = get_jira_config()
+
+    jira_url = os.getenv("JIRA_URL") or jira_config.get("server")
+    username = os.getenv("JIRA_USER") or jira_config.get("email")
+    api_token = os.getenv("JIRA_API_TOKEN") or jira_config.get("token")
+    project_key = os.getenv("JIRA_PROJECT_KEY") or jira_config.get("project_key")
 
     if not all([jira_url, username, api_token, project_key]):
         raise HTTPException(status_code=500, detail="Missing Jira configuration")
