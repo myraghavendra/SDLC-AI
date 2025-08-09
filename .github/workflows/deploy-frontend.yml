@@ -32,7 +32,7 @@ jobs:
         
       - name: Build frontend
         env:
-          VITE_API_URL: ${{ secrets.RAILWAY_BACKEND_URL }}
+          VITE_API_URL: ${{ secrets.RAILWAY_BACKEND_URL || 'https://sdlc-ai-production.up.railway.app' }}
         run: npm run build
         
       - name: Upload artifact
