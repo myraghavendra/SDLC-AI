@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Entry point for the FastAPI application
 This script handles the Python path correctly when running the application directly
