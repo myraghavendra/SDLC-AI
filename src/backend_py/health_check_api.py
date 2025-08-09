@@ -146,8 +146,14 @@ async def test_connections():
             from httpx import AsyncClient
             import base64
             
+            # Fix the f-string syntax error by separating the credential creation
+            email = jira_config['email']
+            token = jira_config['token']
+            credentials = f"{email}:{token}"
+            auth_header = base64.b64encode(credentials.encode()).decode()
+            
             headers = {
-                "Authorization": f"Basic {base64.b64encode(f'{jira_config['email']}:{jira_config['token']}'.encode()).decode()}",
+                "Authorization": f"Basic {auth_header}",
                 "Accept": "application/json"
             }
             
