@@ -15,6 +15,12 @@ jobs:
     container: ghcr.io/railwayapp/cli:latest
     
     steps:
+      - name: Print all environment variables
+        run: |
+            echo "--- All available environment variables ---"
+            env | sort
+
+
       - name: Checkout
         uses: actions/checkout@v4
 
