@@ -21,9 +21,9 @@ jobs:
             env | sort
 
       - name: Use a secret
-       env:
+        env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-       run: echo "This is a secret value:" " ${{ secrets.RAILWAY_TOKEN }}"
+        run: echo "This is a secret value:${{ secrets.RAILWAY_TOKEN }}"
 
       - name: Checkout
         uses: actions/checkout@v4

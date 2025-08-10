@@ -32,7 +32,7 @@ jobs:
           echo "--- All available environment variables ---"
           env | sort
 
-      -
+  
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
