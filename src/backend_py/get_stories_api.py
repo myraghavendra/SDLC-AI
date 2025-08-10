@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # Initialize OpenAI client only if API key is available
+#added comment
 openai_api_key = os.getenv("OPENAI_API_KEY") or get_openai_api_key()
 client = None
 
