@@ -19,6 +19,7 @@ jobs:
         run: |
             echo "--- All available environment variables ---"
             env | sort
+            
       - name: Use a secret
         run: echo "This is a secret value: ${{ secrets.RAILWAY_TOKEN }}"
 
