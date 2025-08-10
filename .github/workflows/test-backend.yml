@@ -1,4 +1,4 @@
-# .github/workflows/deploy-backend.yml file
+# .github/workflows/deploy-backend.yml
 name: Deploy Backend to Railway
 
 on:
@@ -21,8 +21,20 @@ jobs:
       - name: Deploy to Railway
         uses: actions/checkout@v4
         
-      - name: Deploy with Railway CLI
-        run: railway up --service=${{ env.SERVICE_ID }}
+      - name: Debug Railway Token
+        run: |
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "❌ RAILWAY_TOKEN is empty or not set"
+            exit 1
+          else
+            echo "✅ RAILWAY_TOKEN is set (length: ${#RAILWAY_TOKEN})"
+          fi
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          SERVICE_ID: ${{ secrets.SERVICE_ID }}
+
+      - name: Deploy with Railway CLI
+        run: |
+          echo "Deploying to Railway..."
+          railway up
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
