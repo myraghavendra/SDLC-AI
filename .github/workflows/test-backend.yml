@@ -21,20 +21,10 @@ jobs:
       - name: Deploy to Railway
         uses: actions/checkout@v4
         
-      - name: Debug Railway Token
-        run: |
-          if [ -z "$RAILWAY_TOKEN" ]; then
-            echo "❌ RAILWAY_TOKEN is empty or not set"
-            exit 1
-          else
-            echo "✅ RAILWAY_TOKEN is set (length: ${#RAILWAY_TOKEN})"
-          fi
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
       - name: Deploy with Railway CLI
         run: |
           echo "Deploying to Railway..."
-          railway up
+          railway up --service=$SERVICE_ID
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          SERVICE_ID: ${{ secrets.SERVICE_ID }}
