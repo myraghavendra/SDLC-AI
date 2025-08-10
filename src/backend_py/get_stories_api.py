@@ -14,7 +14,7 @@ jira_config = get_jira_config()
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# Initialize OpenAI client only if API key is available
+# Initialize OpenAI client only if API key is available.
 openai_api_key = os.getenv("OPENAI_API_KEY") or get_openai_api_key()
 client = None
 
