@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  base: '/SDLC-AI/', // Your GitHub repository name
+  base : process.env.BASE_URL || "/SDLC-AI/", // Your GitHub repository name
   build: {
     outDir: 'dist'
   }
