@@ -9,12 +9,17 @@ import base64
 from src.backend_py.jira_client import get_jira_stories, JiraClientError
 import logging
 from openai import OpenAI
+from src.backend_py.config import get_openai_api_key, get_jira_config
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-openai_api_key = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=openai_api_key)
+# Use centralized config for OpenAI API key
+openai_api_key = get_openai_api_key()
+if openai_api_key:
+    client = OpenAI(api_key=openai_api_key)
+else:
+    logger.warning("OPENAI_API_KEY not configured")
 
 class GetStoriesRequest(BaseModel):
     tool: str

@@ -8,7 +8,7 @@ import os
 import logging
 import openai
 
-from .config import get_openai_api_key
+from .config import get_openai_api_key, log_configuration_status
 from .generate_api import router as generate_router
 from .upload_jira_api import router as upload_jira_router
 from .jira_config_api import router as jira_config_router
@@ -40,12 +40,17 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={"detail": exc.errors(), "body": exc.body},
     )
 
-# Initialize OpenAI client
-if not os.getenv("OPENAI_API_KEY"):
-    os.environ["OPENAI_API_KEY"] = get_openai_api_key()
-openai.api_key = os.getenv("OPENAI_API_KEY")
-# Removed debug print statement
-# print("openai.api_key", openai.api_key)
+# Initialize OpenAI client using centralized config
+openai_api_key = get_openai_api_key()
+if openai_api_key:
+    os.environ["OPENAI_API_KEY"] = openai_api_key
+    openai.api_key = openai_api_key
+else:
+    logger.warning("OPENAI_API_KEY not configured. Some features may not work.")
+
+# Log configuration status on startup
+log_configuration_status()
+
 # Include routers from modularized API files
 app.include_router(generate_router)
 app.include_router(upload_jira_router)

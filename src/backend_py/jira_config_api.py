@@ -1,10 +1,13 @@
 import os
 from fastapi import APIRouter
+from src.backend_py.config import get_jira_config
 
 router = APIRouter()
             
 @router.get("/api/getJiraConfig")
 async def get_jira_config():
-    jira_url = os.getenv("JIRA_URL", "")
-    project_key = os.getenv("JIRA_PROJECT_KEY", "")
-    return {"jira_url": jira_url, "project_key": project_key}
+    jira_config = get_jira_config()
+    return {
+        "jira_url": jira_config["server"],
+        "project_key": jira_config["project_key"]
+    }

@@ -7,6 +7,7 @@ from openai import OpenAI
 import openai
 import asyncio
 import re
+from src.backend_py.config import get_openai_api_key
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
