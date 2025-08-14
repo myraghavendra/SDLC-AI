@@ -11,6 +11,13 @@
   ],
   "routes": [
     {
+
+
+
+      "src": "/api/(.*)",
+      "dest": "https://your-railway-app-url.railway.app/api/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/$1"
     }
@@ -18,8 +25,9 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm install",
-  "devCommand": "npm run dev",
-  "env": {
-    "VITE_API_URL": "@backend-url"
-  }
+  "devCommand": "npm run dev"
 }
+
+
+
+
