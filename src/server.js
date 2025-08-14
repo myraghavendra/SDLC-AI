@@ -1,20 +1,15 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const dotenv_1 = __importDefault(require("dotenv"));
-const axios_1 = __importDefault(require("axios"));
-const openai_1 = __importDefault(require("openai"));
-dotenv_1.default.config();
-const openai = new openai_1.default({
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import axios from 'axios';
+import OpenAI from 'openai';
+dotenv.config();
+const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
 });
-const app = (0, express_1.default)();
-app.use((0, cors_1.default)());
-app.use(express_1.default.json());
+const app = express();
+app.use(cors());
+app.use(express.json());
 // OpenAI API endpoint for generating acceptance criteria
 app.post('/api/generate', async (req, res) => {
     try {
@@ -94,7 +89,7 @@ app.post('/api/upload-jira', async (req, res) => {
         logMessages.push('➡️ Payload sent to Jira: ' + JSON.stringify(jiraPayload));
         let response;
         try {
-            response = await axios_1.default.post(`${jiraUrl}/rest/api/2/issue`, jiraPayload, {
+            response = await axios.post(`${jiraUrl}/rest/api/2/issue`, jiraPayload, {
                 auth: {
                     username: jiraUser,
                     password: jiraApiToken
