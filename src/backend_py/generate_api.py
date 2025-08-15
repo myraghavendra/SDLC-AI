@@ -93,7 +93,8 @@ Automation Test Code:
         import traceback
         tb = traceback.format_exc()
         logger.error(f"Error in /api/generate: {e}\\nTraceback:\\n{tb}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        print(f"Error in /api/generate: {e}\\nTraceback:\\n{tb}")  # For cloud logging visibility
+        raise HTTPException(status_code=500, detail=f"{str(e)}")
 
 class DefectSummaryRequest(BaseModel):
     project_name: str
