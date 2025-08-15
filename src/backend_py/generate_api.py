@@ -23,9 +23,17 @@ class GenerateRequest(BaseModel):
     context: Optional[str] = None
     framework: Optional[str] = None  # e.g., "Cypress", "Selenium", etc.
 
+@router.get("/api/health")
+async def health_check():
+    """Health check endpoint to verify API is running"""
+    return {"status": "healthy", "endpoint": "/api/generate", "method": "POST"}
+
 @router.post("/api/generate")
 async def generate(request: GenerateRequest):
+    logger.info(f"Received POST request to /api/generate with body: {request.dict()}")
+    
     if not request.description:
+        logger.warning("Missing description in request")
         raise HTTPException(status_code=400, detail="Description is required")
 
     framework = request.framework or "None"

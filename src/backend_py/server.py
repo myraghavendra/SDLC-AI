@@ -17,14 +17,26 @@ from .requirement_analyser_api import router as requirement_analyser_router
 
 load_dotenv()
 
-app = FastAPI()
+app = FastAPI(
+    title="SDLC AI Backend",
+    description="Backend API for SDLC AI Dashboard",
+    version="1.0.0"
+)
 
-# Configure CORS
+# Configure CORS for Railway deployment
+origins = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "https://sdlc-ai-production.up.railway.app",
+    "https://*.vercel.app",
+    "*"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
