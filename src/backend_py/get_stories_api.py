@@ -7,19 +7,28 @@ from typing import Optional
 import os
 import base64
 from src.backend_py.jira_client import get_jira_stories, JiraClientError
+from src.backend_py.config import get_openai_api_key
 import logging
 from openai import OpenAI
-from src.backend_py.config import get_openai_api_key, get_jira_config
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# Use centralized config for OpenAI API key
-openai_api_key = get_openai_api_key()
-if openai_api_key:
-    client = OpenAI(api_key=openai_api_key)
-else:
-    logger.warning("OPENAI_API_KEY not configured")
+def get_openai_client():
+    """Get OpenAI client with proper API key handling"""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        try:
+            api_key = get_openai_api_key()
+            if api_key:
+                os.environ["OPENAI_API_KEY"] = api_key
+        except Exception as e:
+            logger.error(f"Failed to get OpenAI API key from config: {e}")
+    
+    if not api_key:
+        raise HTTPException(status_code=503, detail="OpenAI API key not configured - API key should read from Vercel environment variable")
+    
+    return OpenAI(api_key=api_key)
 
 class GetStoriesRequest(BaseModel):
     tool: str
@@ -136,6 +145,7 @@ async def get_stories_by_filter(request: GetStoriesByFilterRequest):
             prompt = f"Generate a defect summary report for project {project_key} including total number of defects, open/closed/reopened status, severity breakdown, and defect leakage if available. Here are the defects:\n{issues_summary}"
 
             try:
+                client = get_openai_client()
                 completion = client.chat.completions.create(
                     model="gpt-4o-mini",
                     messages=[
@@ -146,6 +156,9 @@ async def get_stories_by_filter(request: GetStoriesByFilterRequest):
                     temperature=0.7,
                 )
                 analysis = completion.choices[0].message.content.strip()
+            except HTTPException:
+                # Re-raise HTTP exceptions (like 503 for missing API key)
+                raise
             except Exception as e:
                 logger.error(f"Error during OpenAI analysis: {e}")
                 analysis = "Error analyzing Jira issues."

@@ -1,68 +1,47 @@
 import logging
-import os
-import re
-import traceback
-from typing import Optional
+from fastapi import FastAPI, HTTPException, Request, Response , APIRouter
 
-from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+from typing import Optional
+import os
+import openai
+from src.backend_py.config import get_openai_api_key
 from openai import OpenAI
-
-from src.backend_py.config import get_openai_api_key, is_openai_configured
+from src.backend_py.jira_client import get_jira_stories, get_all_jira_stories
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# Get OpenAI API key
-openai_api_key = get_openai_api_key()
+def get_openai_client():
+    """Get OpenAI client with proper API key handling"""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        try:
+            api_key = get_openai_api_key()
+            if api_key:
+                os.environ["OPENAI_API_KEY"] = api_key
+        except Exception as e:
+            logger.error(f"Failed to get OpenAI API key from config: {e}")
+    
+    if not api_key:
+        raise HTTPException(status_code=503, detail="OpenAI API key not configured - API key should read from Vercel environment variable")
+    
+    return OpenAI(api_key=api_key)
 
 class GenerateRequest(BaseModel):
-    description: str = Field(..., description="User story description")
-    context: Optional[str] = Field(None, description="Optional context")
-    framework: Optional[str] = Field(None, description="Test framework (Cypress, Selenium, Playwright)")
-
-class GenerateResponse(BaseModel):
-    acceptanceCriteria: str
-    technicalNotes: str
-    testCode: str
-    framework: str
-
-@router.get("/api/health")
-async def health_check():
-    """Health check endpoint to verify API is running"""
-    openai_status = "configured" if is_openai_configured() else "not configured"
-    return {
-        "status": "healthy", 
-        "endpoint": "/api/generate", 
-        "method": "POST",
-        "openai_configured": openai_status
-    }
+    description: str
+    context: Optional[str] = None
+    framework: Optional[str] = None  # e.g., "Cypress", "Selenium", etc.
 
 @router.post("/api/generate")
 async def generate(request: GenerateRequest):
-    logger.info(f"Received POST request to /api/generate with body: {request.dict()}")
-    
-    # Validate OpenAI configuration
-    if not is_openai_configured():
-        logger.error("OpenAI API key not configured")
-        raise HTTPException(
-            status_code=503, 
-            detail="OpenAI API key not configured. Please set OPENAI_API_KEY environment variable."
-        )
-    
-    if not request.description or not request.description.strip():
-        logger.warning("Missing or empty description in request")
-        raise HTTPException(status_code=400, detail="Description is required and cannot be empty")
+    if not request.description:
+        raise HTTPException(status_code=400, detail="Description is required")
 
     framework = request.framework or "None"
-    framework = framework.strip()
-    
     # Determine language for framework
-    framework_language = "JavaScript" if framework.lower() == "cypress" else \
-                        ("Java" if framework.lower() == "selenium" else \
-                        ("TypeScript" if framework.lower() == "playwright" else ""))
-
+    framework_language = "JavaScript" if framework.lower() == "cypress" else ("Java" if framework.lower() == "selenium" else ("TypeScript" if framework.lower() == "playwright" else ""))
     prompt = f"""
 You are a software development assistant.
 
@@ -90,7 +69,7 @@ Automation Test Code:
 """
 
     try:
-        client = OpenAI(api_key=openai_api_key)
+        client = get_openai_client()
         completion = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
@@ -102,7 +81,11 @@ Automation Test Code:
         )
         output = completion.choices[0].message.content.strip()
 
-        # Parse the response
+        acceptance_criteria_match = None
+        technical_notes_match = None
+        test_code_match = None
+
+        import re
         acceptance_criteria_match = re.search(r"Acceptance Criteria:(.*?)(Technical Notes:|$)", output, re.DOTALL)
         technical_notes_match = re.search(r"Technical Notes:(.*?)(Automation Test Code:|$)", output, re.DOTALL)
         test_code_match = re.search(r"Automation Test Code:(.*)", output, re.DOTALL)
@@ -111,40 +94,24 @@ Automation Test Code:
         technical_notes = technical_notes_match.group(1).strip() if technical_notes_match else ""
         test_code = test_code_match.group(1).strip() if test_code_match else ""
 
-        logger.info("Successfully generated response")
         return {
             "acceptanceCriteria": acceptance_criteria,
             "technicalNotes": technical_notes,
             "testCode": test_code,
             "framework": framework
         }
+    except HTTPException:
+        # Re-raise HTTP exceptions (like 503 for missing API key)
+        raise
     except Exception as e:
-        error_msg = str(e)
+        import traceback
         tb = traceback.format_exc()
-        logger.error(f"Error in /api/generate: {error_msg}\nTraceback:\n{tb}")
-        
-        # Provide more specific error messages
-        if "insufficient_quota" in error_msg.lower():
-            raise HTTPException(
-                status_code=429, 
-                detail="OpenAI API quota exceeded. Please check your billing details."
-            )
-        elif "invalid_api_key" in error_msg.lower():
-            raise HTTPException(
-                status_code=401, 
-                detail="Invalid OpenAI API key. Please check your configuration."
-            )
-        else:
-            raise HTTPException(
-                status_code=500, 
-                detail=f"Internal server error: {error_msg}"
-            )
+        logger.error(f"Error in /api/generate: {e}\\nTraceback:\\n{tb}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 class DefectSummaryRequest(BaseModel):
     project_name: str
     
-
-
 
 @router.post("/api/defectSummaryReport")
 async def defect_summary_report(request: Request):
@@ -154,9 +121,7 @@ async def defect_summary_report(request: Request):
     # Optional parameters for prompts
     x_value = data.get("x_value", "5")  # default 5 sprints/weeks/days
     modules = data.get("modules", ["Module A", "Module B", "Module C"])
-    # Removed debug print statements
-    # print("project name", project_name)
-    # print("data", data)
+    
     if not project_name:
         return JSONResponse(content={"error": "Project name is required"})
 
@@ -207,7 +172,7 @@ Sample Defects:
 {chr(10).join([f"- {defect['key']}: {defect['fields']['summary'][:100]}... (Status: {defect['fields']['status']['name']}, Priority: {defect['fields'].get('priority', {}).get('name', 'N/A')})" for defect in defects[:10]])}
 """
 
-        client = OpenAI(api_key=openai_api_key)
+        client = get_openai_client()
 
         # Define all prompts with placeholders filled
         prompts = {
@@ -261,6 +226,9 @@ Analyze reopened defects in project {project_name} from the last {x_value} relea
             "detailedReports": detailed_reports
         })
 
+    except HTTPException:
+        # Re-raise HTTP exceptions (like 503 for missing API key)
+        raise
     except Exception as e:
         import traceback
         tb = traceback.format_exc()
