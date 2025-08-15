@@ -69,3 +69,15 @@ app.include_router(upload_jira_router)
 app.include_router(jira_config_router)
 app.include_router(get_stories_router)
 app.include_router(requirement_analyser_router)
+
+# Add health check endpoint for debugging
+@app.get("/api/config-status")
+async def config_status():
+    """Configuration status endpoint for debugging"""
+    from src.backend_py.config import validate_configuration
+    
+    config_status = validate_configuration()
+    return {
+        "configuration": config_status,
+        "message": "Check configuration status for debugging"
+    }

@@ -1,43 +1,66 @@
 import logging
-from fastapi import FastAPI, HTTPException, Request, Response, APIRouter
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+import re
+import traceback
 from typing import Optional
-import os
-import openai
-from src.backend_py.config import get_openai_api_key, get_jira_config
+
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
 from openai import OpenAI
-from src.backend_py.jira_client import get_jira_stories, get_all_jira_stories
+
+from src.backend_py.config import get_openai_api_key, is_openai_configured
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# Use centralized config for OpenAI API key
+# Get OpenAI API key
 openai_api_key = get_openai_api_key()
-if not openai_api_key:
-    logger.warning("OPENAI_API_KEY not configured")
 
 class GenerateRequest(BaseModel):
-    description: str
-    context: Optional[str] = None
-    framework: Optional[str] = None  # e.g., "Cypress", "Selenium", etc.
+    description: str = Field(..., description="User story description")
+    context: Optional[str] = Field(None, description="Optional context")
+    framework: Optional[str] = Field(None, description="Test framework (Cypress, Selenium, Playwright)")
+
+class GenerateResponse(BaseModel):
+    acceptanceCriteria: str
+    technicalNotes: str
+    testCode: str
+    framework: str
 
 @router.get("/api/health")
 async def health_check():
     """Health check endpoint to verify API is running"""
-    return {"status": "healthy", "endpoint": "/api/generate", "method": "POST"}
+    openai_status = "configured" if is_openai_configured() else "not configured"
+    return {
+        "status": "healthy", 
+        "endpoint": "/api/generate", 
+        "method": "POST",
+        "openai_configured": openai_status
+    }
 
 @router.post("/api/generate")
 async def generate(request: GenerateRequest):
     logger.info(f"Received POST request to /api/generate with body: {request.dict()}")
     
-    if not request.description:
-        logger.warning("Missing description in request")
-        raise HTTPException(status_code=400, detail="Description is required")
+    # Validate OpenAI configuration
+    if not is_openai_configured():
+        logger.error("OpenAI API key not configured")
+        raise HTTPException(
+            status_code=503, 
+            detail="OpenAI API key not configured. Please set OPENAI_API_KEY environment variable."
+        )
+    
+    if not request.description or not request.description.strip():
+        logger.warning("Missing or empty description in request")
+        raise HTTPException(status_code=400, detail="Description is required and cannot be empty")
 
     framework = request.framework or "None"
+    framework = framework.strip()
+    
     # Determine language for framework
-    framework_language = "JavaScript" if framework.lower() == "cypress" else ("Java" if framework.lower() == "selenium" else ("TypeScript" if framework.lower() == "playwright" else ""))
+    framework_language = "JavaScript" if framework.lower() == "cypress" else \
+                        ("Java" if framework.lower() == "selenium" else \
+                        ("TypeScript" if framework.lower() == "playwright" else ""))
+
     prompt = f"""
 You are a software development assistant.
 
@@ -77,11 +100,7 @@ Automation Test Code:
         )
         output = completion.choices[0].message.content.strip()
 
-        acceptance_criteria_match = None
-        technical_notes_match = None
-        test_code_match = None
-
-        import re
+        # Parse the response
         acceptance_criteria_match = re.search(r"Acceptance Criteria:(.*?)(Technical Notes:|$)", output, re.DOTALL)
         technical_notes_match = re.search(r"Technical Notes:(.*?)(Automation Test Code:|$)", output, re.DOTALL)
         test_code_match = re.search(r"Automation Test Code:(.*)", output, re.DOTALL)
@@ -90,6 +109,7 @@ Automation Test Code:
         technical_notes = technical_notes_match.group(1).strip() if technical_notes_match else ""
         test_code = test_code_match.group(1).strip() if test_code_match else ""
 
+        logger.info("Successfully generated response")
         return {
             "acceptanceCriteria": acceptance_criteria,
             "technicalNotes": technical_notes,
@@ -97,11 +117,26 @@ Automation Test Code:
             "framework": framework
         }
     except Exception as e:
-        import traceback
+        error_msg = str(e)
         tb = traceback.format_exc()
-        logger.error(f"Error in /api/generate: {e}\\nTraceback:\\n{tb}")
-        print(f"Error in /api/generate: {e}\\nTraceback:\\n{tb}")  # For cloud logging visibility
-        raise HTTPException(status_code=500, detail=f"{str(e)}")
+        logger.error(f"Error in /api/generate: {error_msg}\nTraceback:\n{tb}")
+        
+        # Provide more specific error messages
+        if "insufficient_quota" in error_msg.lower():
+            raise HTTPException(
+                status_code=429, 
+                detail="OpenAI API quota exceeded. Please check your billing details."
+            )
+        elif "invalid_api_key" in error_msg.lower():
+            raise HTTPException(
+                status_code=401, 
+                detail="Invalid OpenAI API key. Please check your configuration."
+            )
+        else:
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Internal server error: {error_msg}"
+            )
 
 class DefectSummaryRequest(BaseModel):
     project_name: str
