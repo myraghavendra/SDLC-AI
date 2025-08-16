@@ -145,6 +145,24 @@ def is_jira_configured() -> bool:
     
     return all(jira_config.get(field) for field in required_fields)
 
+def is_database_configured() -> bool:
+    """
+    Check if database is properly configured
+    
+    Returns:
+        bool: True if database is configured, False otherwise
+    """
+    return bool(get_database_config().get("database_url"))
+
+def is_redis_configured() -> bool:
+    """
+    Check if Redis is properly configured
+    
+    Returns:
+        bool: True if Redis is configured, False otherwise
+    """
+    return bool(get_redis_config().get("redis_url"))
+
 def validate_configuration() -> Dict[str, bool]:
     """
     Validate all service configurations
@@ -156,9 +174,50 @@ def validate_configuration() -> Dict[str, bool]:
         "openai_configured": is_openai_configured(),
         "jira_configured": is_jira_configured(),
         "is_vercel_environment": secrets_manager.is_vercel_environment(),
-        "database_configured": bool(get_database_config().get("database_url")),
-        "redis_configured": bool(get_redis_config().get("redis_url"))
+        "database_configured": is_database_configured(),
+        "redis_configured": is_redis_configured()
     }
+
+def get_missing_config_summary() -> Dict[str, list]:
+    """
+    Get a summary of missing configuration items
+    
+    Returns:
+        dict: List of missing configuration items by service
+    """
+    missing = {
+        "openai": [],
+        "jira": [],
+        "database": [],
+        "redis": []
+    }
+    
+    # Check OpenAI
+    if not is_openai_configured():
+        missing["openai"].append("OPENAI_API_KEY")
+    
+    # Check Jira
+    jira_config = get_jira_config()
+    if not jira_config.get("server"):
+        missing["jira"].append("JIRA_URL")
+    if not jira_config.get("email"):
+        missing["jira"].append("JIRA_USER")
+    if not jira_config.get("token"):
+        missing["jira"].append("JIRA_API_TOKEN")
+    if not jira_config.get("project_key"):
+        missing["jira"].append("JIRA_PROJECT_KEY")
+    
+    # Check Database
+    db_config = get_database_config()
+    if not db_config.get("database_url"):
+        missing["database"].append("DATABASE_URL")
+    
+    # Check Redis
+    redis_config = get_redis_config()
+    if not redis_config.get("redis_url"):
+        missing["redis"].append("REDIS_URL")
+    
+    return missing
 
 def log_configuration_status():
     """

@@ -9,17 +9,17 @@
       }
     },
     {
-      "src": "src/backend_py/main.py",
+      "src": "api/index.py",
       "use": "@vercel/python",
       "config": {
-        "runtime": "python3.11"
+        "runtime": "python3.12"
       }
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "src/backend_py/main.py"
+      "dest": "api/index.py"
     },
     {
       "src": "/(.*)",
