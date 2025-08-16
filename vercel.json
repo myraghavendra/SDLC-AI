@@ -1,5 +1,11 @@
 {
   "version": 2,
+
+  "functions": {
+    "src/backend_py/main.py": {
+      "runtime": "python3.9"
+    }
+  },
   "builds": [
     {
       "src": "package.json",
@@ -9,17 +15,14 @@
       }
     },
     {
-      "src": "src/backend_py/server.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "50mb"
-      }
+          "src": "src/backend_py/main.py",
+      "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/src/backend_py/server.py"
+      "dest": "src/backend_py/main.py"
     },
     {
       "src": "/(.*)",
