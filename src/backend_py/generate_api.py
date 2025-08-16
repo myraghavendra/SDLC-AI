@@ -1,13 +1,11 @@
 import logging
-from fastapi import FastAPI, HTTPException, Request, Response , APIRouter
-
+from fastapi import FastAPI, HTTPException, Request, Response, APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional
 import os
-import openai
-from src.backend_py.config import get_openai_api_key
 from openai import OpenAI
+from src.backend_py.config import get_openai_api_key
 from src.backend_py.jira_client import get_jira_stories, get_all_jira_stories
 
 logger = logging.getLogger(__name__)
@@ -15,17 +13,13 @@ router = APIRouter()
 
 def get_openai_client():
     """Get OpenAI client with proper API key handling"""
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        try:
-            api_key = get_openai_api_key()
-            if api_key:
-                os.environ["OPENAI_API_KEY"] = api_key
-        except Exception as e:
-            logger.error(f"Failed to get OpenAI API key from config: {e}")
+    api_key = get_openai_api_key()
     
     if not api_key:
-        raise HTTPException(status_code=503, detail="OpenAI API key not configured - API key should read from Vercel environment variable")
+        raise HTTPException(
+            status_code=503, 
+            detail="OpenAI API key not configured. Please set OPENAI_API_KEY environment variable in Vercel dashboard."
+        )
     
     return OpenAI(api_key=api_key)
 
