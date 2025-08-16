@@ -1,1 +1,16 @@
-{"projectId":"prj_1yaq02fozNrrgjzmFkXjBm0sivjp","orgId":"team_gCf67bawCz9JjInJ6svWA6GG","projectName":"sdlc-ai"}
+{
+  "projectId": "prj_1yaq02fozNrrgjzmFkXjBm0sivjp",
+  "orgId": "team_gCf67bawCz9JjInJ6svWA6GG",
+  "projectName": "sdlc-ai",
+  "settings": {
+    "createdAt": 1755182468781,
+    "framework": "vite",
+    "devCommand": null,
+    "installCommand": "npm install",
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "22.x"
+  }
+}
