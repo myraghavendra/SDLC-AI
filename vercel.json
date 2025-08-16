@@ -10,7 +10,10 @@
     },
     {
       "src": "src/backend_py/server.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "50mb"
+      }
     }
   ],
   "routes": [
@@ -27,5 +30,4 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "devCommand": "npm run dev"
-  
 }

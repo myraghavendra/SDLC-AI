@@ -1,4 +1,5 @@
-.env
-src/backend_py/config.py
+
+src/backend_py/__pycache__
+
 node_modules
-.vercel
+
