@@ -25,7 +25,7 @@
       "src": "src/backend_py/main.py",
       "use": "@vercel/python",
       "config": {
-        "runtime": "python3.12"
+        "runtime": "python3.11"
       },
       "error": {
         "name": "Error",
