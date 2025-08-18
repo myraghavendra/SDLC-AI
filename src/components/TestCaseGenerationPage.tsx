@@ -39,27 +39,34 @@ const TestCaseGenerationPage: React.FC<TestCaseGenerationPageProps> = ({
     setTestCode('');
     setLoading(true);
     try {
-      const story = selectedStories[0];
       const body = {
-        description: story.summary,
-        context: story.description, 
+        tool: selectedTool,
+        stories: selectedStories.map(story => ({
+          key: story.key,
+          title: story.summary,
+          description: story.description
+        })),
         framework: framework,
+        context: `Jira URL: ${jiraUrl || 'N/A'}, Project Key: ${projectKey || 'N/A'}`
       };
-      const response = await fetch('/api/generate', {
+      
+      const response = await fetch('/api/integrated-story', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
+      
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.detail || 'Failed to generate test cases');
+        throw new Error(errData.detail || 'Failed to generate integrated test cases');
       }
+      
       const data = await response.json();
       setAcceptanceCriteria(data.acceptanceCriteria || '');
       setTechnicalNotes(data.technicalNotes || '');
       setTestCode(data.testCode || '');
     } catch (err: any) {
-      setError(err.message || 'Error generating test cases');
+      setError(err.message || 'Error generating integrated test cases');
     } finally {
       setLoading(false);
     }

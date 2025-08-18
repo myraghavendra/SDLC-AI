@@ -22,6 +22,7 @@ from src.backend_py.upload_jira_api import router as upload_jira_router
 from src.backend_py.requirement_analyser_api import router as requirement_analyser_router
 from src.backend_py.get_stories_api import router as get_stories_router
 from src.backend_py.jira_config_api import router as jira_config_router
+from src.backend_py.integrated_story_api import router as integrated_story_router
 
 # Configure logging
 logging.basicConfig(
@@ -172,6 +173,7 @@ app.include_router(upload_jira_router)
 app.include_router(requirement_analyser_router)
 app.include_router(get_stories_router)
 app.include_router(jira_config_router)
+app.include_router(integrated_story_router)
 
 if __name__ == "__main__":
     import uvicorn

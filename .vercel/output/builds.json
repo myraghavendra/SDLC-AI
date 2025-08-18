@@ -22,10 +22,10 @@
       "require": "@vercel/python",
       "requirePath": "C:\\Users\\myrag\\AppData\\Roaming\\npm\\node_modules\\vercel\\node_modules\\@vercel\\python\\dist\\index.js",
       "apiVersion": 3,
-      "src": "src/backend_py/main.py",
+      "src": "api/index.py",
       "use": "@vercel/python",
       "config": {
-        "runtime": "python3.11"
+        "runtime": "python3.12"
       },
       "error": {
         "name": "Error",
