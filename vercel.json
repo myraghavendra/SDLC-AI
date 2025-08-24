@@ -19,6 +19,10 @@
   ],
   "routes": [
     {
+      "src": "/health",
+      "dest": "/api/index.py"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.py"
     },
@@ -28,9 +32,9 @@
       "dest": "/index.html"
     }
   ],
-  "buildCommand": "npm run build",
+  "buildCommand": "pip install -r src/backend_py/requirements.txt && npm run build",
   "outputDirectory": "dist",
-"installCommand": "pip install -r src/backend_py/requirements.txt && npm install",
+  "installCommand": "pip install -r src/backend_py/requirements.txt && npm install",
   "devCommand": "npm run dev",
   "env": {
     "PYTHONPATH": "/var/task"

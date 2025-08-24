@@ -25,7 +25,8 @@
       "src": "api/index.py",
       "use": "@vercel/python",
       "config": {
-        "runtime": "python3.12"
+        "runtime": "python3.12",
+        "maxLambdaSize": "50mb"
       },
       "error": {
         "name": "Error",

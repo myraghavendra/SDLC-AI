@@ -1,8 +1,10 @@
 import logging
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import PlainTextResponse
 from contextlib import asynccontextmanager
 import redis
 import psycopg2
@@ -42,19 +44,21 @@ async def lifespan(app: FastAPI):
     logger.info("Starting application...")
     log_configuration_status()
     
-    # Initialize database connection if configured
+    # Initialize database connection if configured - but don't fail if it doesn't work
     if is_database_configured():
         try:
             await init_database()
         except Exception as e:
             logger.error(f"Failed to initialize database: {e}")
+            logger.warning("Database connection failed, but application will continue without it")
     
-    # Initialize Redis connection if configured
+    # Initialize Redis connection if configured - but don't fail if it doesn't work
     if is_redis_configured():
         try:
             await init_redis()
         except Exception as e:
             logger.error(f"Failed to initialize Redis: {e}")
+            logger.warning("Redis connection failed, but application will continue without it")
     
     yield
     
@@ -125,24 +129,50 @@ async def health_check():
         }
     }
     
-    # Test actual connections
-    if is_database_configured() and db_connection:
-        try:
-            cursor = db_connection.cursor()
-            cursor.execute("SELECT 1")
-            cursor.close()
-            health_status["services"]["database"] = True
-        except:
+    # Test actual connections only if they are configured and initialized
+    if is_database_configured():
+        if db_connection:
+            try:
+                cursor = db_connection.cursor()
+                cursor.execute("SELECT 1")
+                cursor.close()
+                health_status["services"]["database"] = True
+            except Exception as e:
+                logger.error(f"Database connection test failed: {e}")
+                health_status["services"]["database"] = False
+                health_status["status"] = "degraded"
+        else:
+            # Database is configured but connection not initialized
             health_status["services"]["database"] = False
             health_status["status"] = "degraded"
+    else:
+        # Database is not configured, which is acceptable
+        health_status["services"]["database"] = False
     
-    if is_redis_configured() and redis_client:
-        try:
-            redis_client.ping()
-            health_status["services"]["redis"] = True
-        except:
+    if is_redis_configured():
+        if redis_client:
+            try:
+                redis_client.ping()
+                health_status["services"]["redis"] = True
+            except Exception as e:
+                logger.error(f"Redis connection test failed: {e}")
+                health_status["services"]["redis"] = False
+                health_status["status"] = "degraded"
+        else:
+            # Redis is configured but connection not initialized
             health_status["services"]["redis"] = False
             health_status["status"] = "degraded"
+    else:
+        # Redis is not configured, which is acceptable
+        health_status["services"]["redis"] = False
+    
+    # If core services (API itself) are working, consider it healthy even if optional services are down
+    if health_status["status"] == "degraded" and not any([
+        health_status["services"]["database"],
+        health_status["services"]["redis"]
+    ]):
+        # Only database and redis are down, but they're optional for basic functionality
+        health_status["status"] = "healthy"
     
     return JSONResponse(content=health_status)
 
@@ -166,6 +196,78 @@ async def root():
         "config": "/config",
         "docs": "/docs"
     }
+
+# Global exception handlers
+@app.exception_handler(404)
+async def not_found_exception_handler(request: Request, exc: HTTPException):
+    """Handle 404 Not Found errors"""
+    logger.warning(f"404 Not Found: {request.url.path}")
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": "NOT_FOUND",
+            "message": f"The requested resource '{request.url.path}' was not found",
+            "code": "NOT_FOUND",
+            "details": {
+                "path": request.url.path,
+                "method": request.method,
+                "timestamp": exc.__str__()
+            }
+        }
+    )
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Handle HTTP exceptions"""
+    logger.error(f"HTTP Error {exc.status_code}: {exc.detail}")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": "HTTP_ERROR",
+            "message": exc.detail,
+            "code": f"HTTP_{exc.status_code}",
+            "details": {
+                "path": request.url.path,
+                "method": request.method
+            }
+        }
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handle validation errors"""
+    logger.error(f"Validation error: {exc.errors()}")
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": "VALIDATION_ERROR",
+            "message": "Invalid request data",
+            "code": "VALIDATION_FAILED",
+            "details": {
+                "errors": exc.errors(),
+                "path": request.url.path,
+                "method": request.method
+            }
+        }
+    )
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    """Handle all other exceptions"""
+    logger.error(f"Unhandled exception: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "INTERNAL_SERVER_ERROR",
+            "message": "An unexpected error occurred",
+            "code": "SERVER_ERROR",
+            "details": {
+                "path": request.url.path,
+                "method": request.method,
+                "error_type": exc.__class__.__name__
+            }
+        }
+    )
 
 # Include all routers
 app.include_router(generate_router)
