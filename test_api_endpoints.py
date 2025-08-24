@@ -9,13 +9,18 @@ import json
 # Test endpoints
 ENDPOINTS = [
     "/api/generate",
-    "/api/integrated-story",
+    "/api/defectSummaryReport",
     "/api/upload-jira",
-    "/api/requirement-analyser",
-    "/api/get-stories",
-    "/api/jira-config",
+    "/api/analyzeRequirement",
+    "/api/getStories",
+    "/api/getStoriesByFilter",
+    "/api/getJiraProjects",
+    "/api/getJiraConfig",
+    "/api/integrated-story",
+    "/api/integrated-story/health",
     "/health",
-    "/config"
+    "/config",
+    "/"
 ]
 
 def test_endpoints(base_url="http://localhost:8000"):
@@ -29,16 +34,62 @@ def test_endpoints(base_url="http://localhost:8000"):
             if endpoint == "/api/generate":
                 # Test POST endpoint
                 response = requests.post(url, json={
-                    "description": "Test user story",
-                    "context": "Test context",
+                    "description": "As a user, I want to be able to log in to the system so that I can access my account",
+                    "context": "Authentication system with email/password login",
                     "framework": "Cypress"
+                }, timeout=10)
+            elif endpoint == "/api/defectSummaryReport":
+                # Test POST endpoint
+                response = requests.post(url, json={
+                    "project_name": "TEST"
+                }, timeout=10)
+            elif endpoint == "/api/upload-jira":
+                # Test POST endpoint
+                response = requests.post(url, json={
+                    "summary": "Test User Story - Login Functionality",
+                    "description": "As a user, I want to be able to log in to the system so that I can access my account"
+                }, timeout=10)
+            elif endpoint == "/api/analyzeRequirement":
+                # Test POST endpoint
+                response = requests.post(url, json={
+                    "tool": "JIRA",
+                    "story_key": "TEST-1",
+                    "story_text": "As a user, I want to be able to log in to the system so that I can access my account",
+                    "prompt": "Evaluate this user story for quality and completeness"
+                }, timeout=10)
+            elif endpoint == "/api/getStories":
+                # Test POST endpoint
+                response = requests.post(url, json={
+                    "tool": "jira",
+                    "jira_url": "https://test.atlassian.net",
+                    "project_key": "TEST"
+                }, timeout=10)
+            elif endpoint == "/api/getStoriesByFilter":
+                # Test POST endpoint
+                response = requests.post(url, json={
+                    "tool": "jira",
+                    "jira_url": "https://test.atlassian.net",
+                    "filter_id": "12345",
+                    "project_key": "TEST"
                 }, timeout=10)
             elif endpoint == "/api/integrated-story":
                 # Test POST endpoint
                 response = requests.post(url, json={
-                    "tool": "Test Tool",
-                    "stories": [{"key": "TEST-1", "title": "Test Story", "description": "Test description"}],
-                    "framework": "Cypress"
+                    "tool": "JIRA",
+                    "stories": [
+                        {
+                            "key": "TEST-1",
+                            "title": "Login Functionality",
+                            "description": "As a user, I want to be able to log in to the system"
+                        },
+                        {
+                            "key": "TEST-2", 
+                            "title": "Logout Functionality",
+                            "description": "As a user, I want to be able to log out of the system"
+                        }
+                    ],
+                    "framework": "Cypress",
+                    "context": "Authentication system integration"
                 }, timeout=10)
             else:
                 # Test GET endpoints

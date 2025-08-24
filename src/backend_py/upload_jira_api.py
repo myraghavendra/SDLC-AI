@@ -21,7 +21,15 @@ async def upload_jira(request: UploadJiraRequest):
     project_key = jira_config["project_key"]
 
     if not all([jira_url, username, api_token, project_key]):
-        raise HTTPException(status_code=500, detail="Missing Jira configuration")
+        raise HTTPException(
+            status_code=500, 
+            detail="JIRA configuration is missing. Please configure the following environment variables:\n"
+                   "- JIRA_URL: Your JIRA instance URL (e.g., https://your-domain.atlassian.net)\n"
+                   "- JIRA_USER: Your JIRA username/email\n"
+                   "- JIRA_API_TOKEN: Your JIRA API token\n"
+                   "- JIRA_PROJECT_KEY: Your JIRA project key (e.g., PROJ)\n\n"
+                   "Get your API token from: https://id.atlassian.com/manage-profile/security/api-tokens"
+        )
 
     if not request.summary or not request.description:
         raise HTTPException(status_code=400, detail="Summary and description are required")

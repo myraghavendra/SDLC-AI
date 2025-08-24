@@ -28,7 +28,10 @@ def get_openai_client():
     if not api_key:
         raise HTTPException(
             status_code=503, 
-            detail="OpenAI API key not configured. Please set OPENAI_API_KEY environment variable in Vercel dashboard."
+            detail="OpenAI API key not configured. Please set OPENAI_API_KEY environment variable:\n"
+                   "- In Vercel: Dashboard → Project → Settings → Environment Variables\n"
+                   "- Locally: Create a .env file with OPENAI_API_KEY=your_key_here\n"
+                   "Get your API key from: https://platform.openai.com/account/api-keys"
         )
     
     return OpenAI(api_key=api_key)
