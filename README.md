@@ -51,6 +51,10 @@ npx ts-node src/server.ts
 python src/backend_py/server.py
 ```
 
+## Environment Variables Setup
+
+For detailed instructions on setting up environment variables for local development and production, please refer to the [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md) file.
+
 ## Usage
 - Access the frontend at `http://localhost:5173` (default Vite port).
 - Use the feature pages to generate stories, design tests, analyze requirements, and visualize data.
