@@ -55,8 +55,10 @@ def get_openai_api_key() -> Optional[str]:
     Returns:
         str: The OpenAI API key
     """
+
     openai_api_key = secrets_manager.get_secret("OPENAI_API_KEY")
     
+
     if not openai_api_key or openai_api_key == "your_act" or "sk-" not in openai_api_key:
         logging.warning("OPENAI_API_KEY not properly configured. Some features may not work.")
         return None
